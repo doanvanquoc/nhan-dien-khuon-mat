@@ -55,7 +55,7 @@ if os.path.exists(FAISS_INDEX_PATH):
 @routes.route("/register", methods=["POST"])
 def register():
     if "image" not in request.files:
-        return jsonify({"error": "No image uploaded"}), 400
+        return jsonify({"error": "Không có ảnh upload"}), 400
 
     image_file = request.files["image"]
     user_id = os.path.splitext(image_file.filename)[0]
@@ -64,7 +64,7 @@ def register():
 
     face_encoding = get_face_encoding(image_path)
     if face_encoding is None:
-        return jsonify({"error": "No face detected"}), 400
+        return jsonify({"error": "Không có khuôn mặt được nhận dạng"}), 400
 
     index = faiss_index.add_embedding(face_encoding)
 
@@ -75,13 +75,13 @@ def register():
 
     faiss_index.save_index(FAISS_INDEX_PATH)
 
-    return jsonify({"message": "User registered successfully"}), 200
+    return jsonify({"message": "Đăng ký khuôn mặt thành công"}), 200
 
 
 @routes.route("/verify", methods=["POST"])
 def verify():
     if "image" not in request.files:
-        return jsonify({"error": "No image uploaded"}), 400
+        return jsonify({"error": "Không có ảnh upload"}), 400
 
     image_file = request.files["image"]
     image_path = os.path.join(LOGIN_HISTORY_DIR, image_file.filename)
@@ -91,7 +91,7 @@ def verify():
 
     if face_encoding is None:
         os.remove(image_path)
-        return jsonify({"error": "No face detected"}), 400
+        return jsonify({"error": "Không có khuôn mặt nào được nhận dạng"}), 400
 
     D, I = faiss_index.search_embedding(face_encoding)
     print(f"Khoảng cách giữa 2 vector: {D[0][0]}")
@@ -109,15 +109,15 @@ def verify():
             os.rename(image_path, new_image_path)
 
             return (
-                jsonify({"message": "User verified", "filename": original_filename}),
+                jsonify({"message": "Xác minh thành công", "data": original_filename}),
                 200,
             )
         else:
             os.remove(image_path)
-            return jsonify({"error": "Verification failed - original_filename"}), 400
+            return jsonify({"error": "Xác minh thất bại - original_filename"}), 400
     else:
         os.remove(image_path)
-        return jsonify({"error": "Verification failed - unverify"}), 400
+        return jsonify({"error": "Xác minh thất bại - người dùng chưa đăng ký"}), 400
 
 
 # router nhan dien giong noi
@@ -136,14 +136,16 @@ def transcribe():
         text = recognizer.recognize_google(audio_data, language="vi-VN")
     except sr.UnknownValueError:
         return (
-            jsonify({"error": "Google Speech Recognition could not understand audio"}),
+            jsonify(
+                {"eror": "Google Speech Recognition không nhận diện được giọng nói"}
+            ),
             400,
         )
     except sr.RequestError as e:
         return (
             jsonify(
                 {
-                    "error": f"Could not request results from Google Speech Recognition service; {e}"
+                    "error": f"Không thể lấy kết quả từ Google Speech Recognition service; {e}"
                 }
             ),
             500,
